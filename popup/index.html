@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fast Message</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Login ekranı -->
+    <div id="login-screen">
+      <h1 class="title">Fast Message 🚀</h1>
+      <input type="text" id="userIdInput" placeholder="Kullanıcı ID'nizi giriniz..." />
+      <button id="loginBtn">Giriş Yap</button>
+    </div>
+    
+    <!-- Chat ekranı -->
+    <div id="chat-screen" class="hidden">
+      <div class="top-bar">
+        <div class="top-bar-left">
+          <div id="status-indicator" class="status offline"></div>
+          <span class="status-text" id="status-text">Bağlanıyor...</span>
+        </div>
+        <div id="settings-btn" class="settings">⚙️</div>
+      </div>
+      
+      <div id="settings-panel" class="hidden">
+        <p><b>User ID:</b> <span id="myUserId"></span></p>
+        <button id="logoutBtn" class="secondary">Çıkış Yap</button>
+      </div>
+      
+      <div class="chat-container">
+        <div class="receiver-section">
+          <select id="receiverSelect">
+            <option value="">Alıcı seçin...</option>
+          </select>
+          <div class="receiver-input-group">
+            <input type="text" id="newReceiver" placeholder="Yeni alıcı ID ekle" />
+            <button id="addReceiverBtn">Ekle</button>
+          </div>
+        </div>
+        
+        <textarea id="messageInput" placeholder="Mesajınızı yazın..."></textarea>
+        <button id="sendBtn">Gönder 📤</button>
+        
+        <div id="messages"></div>
+      </div>
+      
+      <div class="log-panel">
+        <h3>📋 Bağlantı Logları</h3>
+        <pre id="logBox"></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- Socket.IO client (local) -->
+  <script src="socket.io.min.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

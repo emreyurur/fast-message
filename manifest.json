@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "Fast Message",
+  "version": "1.0.0",
+  "description": "WebSocket tabanlı hızlı mesajlaşma eklentisi",
+  "action": {
+    "default_popup": "popup/index.html",
+    "default_icon": "icons/mainlogo.png"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": [
+    "storage",
+    "offscreen"
+  ],
+  "host_permissions": [
+    "https://batuhantekin.icu/*",
+    "wss://batuhantekin.icu/*"
+  ],
+  "icons": {
+    "16": "icons/mainlogo.png",
+    "48": "icons/mainlogo.png",
+    "128": "icons/mainlogo.png"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  }
+}
