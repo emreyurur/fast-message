@@ -38,7 +38,8 @@ function setStatus(online) {
 }
 
 // Mesaj ekleme
-function addMessage(text, type = 'info') {
+// Sadece mesaj metnini kopyalamak için yeni parametre eklendi: rawMessageText
+function addMessage(text, type = 'info', rawMessageText) {
   const messagesDiv = document.getElementById("messages");
   const messageContainer = document.createElement("div");
   messageContainer.className = "message-item";
@@ -64,12 +65,12 @@ function addMessage(text, type = 'info') {
   copyBtn.title = "Mesajı kopyala";
   copyBtn.onclick = (e) => {
     e.stopPropagation();
-    copyToClipboard(text);
+    copyToClipboard(rawMessageText); // Sadece mesaj içeriğini kopyala
   };
   
   // Mesaja tıklayınca da kopyala
   messageContainer.onclick = () => {
-    copyToClipboard(text);
+    copyToClipboard(rawMessageText); // Sadece mesaj içeriğini kopyala
   };
   
   messageContainer.appendChild(messageText);
@@ -130,12 +131,11 @@ function loadReceivers() {
   return receivers;
 }
 
+// Son gönderilen alıcıyı varsayılan olarak seçmek için güncellendi
 function updateReceiverSelect() {
   const select = document.getElementById("receiverSelect");
   const receivers = loadReceivers();
-  
-  // Mevcut seçimi koru
-  const currentValue = select.value;
+  const lastReceiver = localStorage.getItem('lastReceiver');
   
   // Dropdown'u temizle ve yeniden doldur
   select.innerHTML = '<option value="">Alıcı seçin...</option>';
@@ -147,12 +147,15 @@ function updateReceiverSelect() {
     select.appendChild(option);
   });
   
-  // Önceki seçimi geri yükle
-  if (currentValue && receivers.includes(currentValue)) {
-    select.value = currentValue;
+  // Son alıcıyı varsayılan olarak seç
+  if (lastReceiver && receivers.includes(lastReceiver)) {
+    select.value = lastReceiver;
+    console.log("📝 Son alıcı varsayılan olarak seçildi:", lastReceiver);
+  } else if (receivers.length > 0) {
+    // Eğer son alıcı yoksa veya listeden silinmişse, ilk alıcıyı seç
+    select.value = receivers[0];
+    console.log("📝 Son alıcı bulunamadı, ilk alıcı seçildi:", receivers[0]);
   }
-  
-  console.log("🔄 Alıcı listesi güncellendi. Toplam:", receivers.length);
 }
 
 // Chat başlat
@@ -171,8 +174,7 @@ function startChat(userId) {
   log(`🔗 Bağlantı URL'si: wss://batuhantekin.icu/wschat?userId=${userId}`);
   
   // Socket.IO bağlantısı
-  socket = io("https://batuhantekin.icu", {
-    path: "/socket.io",
+  socket = io("https://batuhantekin.icu/wschat", {
     query: { userId: userId },
     transports: ['websocket'],
     reconnection: true,
@@ -190,7 +192,7 @@ function startChat(userId) {
   // Bağlantı olayları
   socket.on("connect", () => {
     console.log("╔════════════════════════════════════════╗");
-    console.log("║  ✅ WEBSOCKET BAĞLANTISI BAŞARILI!     ║");
+    console.log("║  ✅ WEBSOCKET BAĞLANTISI BAŞARILI!      ║");
     console.log("╚════════════════════════════════════════╝");
     console.log("🆔 Socket ID:", socket.id);
     console.log("👤 User ID:", currentUserId);
@@ -214,7 +216,7 @@ function startChat(userId) {
 
   socket.on("connect_error", (error) => {
     console.error("╔════════════════════════════════════════╗");
-    console.error("║  ❌ BAĞLANTI HATASI!                   ║");
+    console.error("║  ❌ BAĞLANTI HATASI!                  ║");
     console.error("╚════════════════════════════════════════╝");
     console.error("❌ Hata detayı:", error);
     console.error("❌ Hata mesajı:", error.message);
@@ -238,9 +240,9 @@ function startChat(userId) {
   // Backend'den gelen eventler
   
   // messages eventi - gelen mesajlar
-  socket.on("messages", (data) => {
+  socket.on("message", (data) => {
     console.log("╔════════════════════════════════════════╗");
-    console.log("║  📩 GELEN MESAJ!                       ║");
+    console.log("║  📩 GELEN MESAJ!                      ║");
     console.log("╚════════════════════════════════════════╝");
     console.log("📦 Raw Data:", data);
     console.log("👤 Gönderen:", data?.from);
@@ -248,7 +250,7 @@ function startChat(userId) {
     console.log("═══════════════════════════════════════════");
     
     if (data && data.from && data.message) {
-      addMessage(`📩 ${data.from}: ${data.message}`, 'received');
+      addMessage(`📩 ${data.from}: ${data.message}`, 'received', data.message);
       log(`📩 ${data.from} → ${data.message}`);
     } else {
       console.warn("⚠️ BEKLENMEYEN MESAJ FORMATI!");
@@ -267,14 +269,14 @@ function startChat(userId) {
     console.error("═══════════════════════════════════════════");
     
     const errorMessage = error?.message || error || "Bilinmeyen hata";
-    addMessage(`❌ Hata: ${errorMessage}`, 'error');
+    addMessage(`❌ Hata: ${errorMessage}`, 'error', errorMessage);
     log(`❌ Backend hatası: ${JSON.stringify(error)}`, 'error');
   });
 
   // users eventi - aktif kullanıcılar
   socket.on("users", (users) => {
     console.log("╔════════════════════════════════════════╗");
-    console.log("║  👥 AKTİF KULLANICILAR                 ║");
+    console.log("║  👥 AKTİF KULLANICILAR                  ║");
     console.log("╚════════════════════════════════════════╝");
     console.log("📦 Raw Data:", users);
     console.log("👥 Kullanıcı sayısı:", Array.isArray(users) ? users.length : "Array değil!");
@@ -367,7 +369,7 @@ document.getElementById("sendBtn").addEventListener("click", () => {
   };
   
   console.log("╔════════════════════════════════════════╗");
-  console.log("║  📤 MESAJ GÖNDERİLİYOR!                ║");
+  console.log("║  📤 MESAJ GÖNDERİLİYOR!                  ║");
   console.log("╚════════════════════════════════════════╝");
   console.log("👤 Gönderen:", currentUserId);
   console.log("👤 Alıcı:", receiver);
@@ -380,7 +382,8 @@ document.getElementById("sendBtn").addEventListener("click", () => {
   socket.emit("message", messageData);
   console.log("✅ Mesaj emit edildi!");
   
-  addMessage(`📤 Siz → ${receiver}: ${message}`, 'sent');
+  addMessage(`📤 Siz → ${receiver}: ${message}`, 'sent', message); // Sadece mesaj içeriği kopyalanacak
+  localStorage.setItem('lastReceiver', receiver); // Son alıcıyı kaydet
   log(`📤 → ${receiver}: ${message}`);
   document.getElementById("messageInput").value = "";
 });
